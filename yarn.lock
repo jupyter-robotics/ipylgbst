@@ -5472,7 +5472,7 @@ kleur@^3.0.3:
 
 "lego-boost-browser@git+https://github.com/DerThorsten/lego-boost-browser.git":
   version "0.1.0"
-  resolved "git+https://github.com/DerThorsten/lego-boost-browser.git#ec05e165f376d2772fc0b63ff4f6800b8d45b51e"
+  resolved "git+https://github.com/DerThorsten/lego-boost-browser.git#9158d3a2bc1848df3bc056199929013cf858ea30"
   dependencies:
     "@types/web-bluetooth" "^0.0.7"
 

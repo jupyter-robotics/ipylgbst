@@ -49,7 +49,7 @@ export class LegoBoostModel extends DOMWidgetModel {
     this.poll();
     if(!this.stop_polling){
       this.polling_is_running = true;
-      setTimeout(this.polling.bind(this), 50);
+      setTimeout(this.polling.bind(this), 200);
     }else{
       this.polling_is_running = false;
     }
