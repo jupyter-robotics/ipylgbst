@@ -1,0 +1,49 @@
+
+ipylgbst
+=====================================
+
+Version: |release|
+
+A widget library for controlling LEGO® BOOST via web-bluetooth
+
+
+Quickstart
+----------
+
+To get started with ipylgbst, install with pip::
+
+    pip install ipylgbst
+
+or with conda::
+
+    conda install ipylgbst
+
+
+Contents
+--------
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Installation and usage
+
+   installing
+   introduction
+
+.. toctree::
+   :maxdepth: 1
+
+   examples/index
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Development
+
+   develop-install
+
+
+.. links
+
+.. _`Jupyter widgets`: https://jupyter.org/widgets.html
+
+.. _`notebook`: https://jupyter-notebook.readthedocs.io/en/latest/
