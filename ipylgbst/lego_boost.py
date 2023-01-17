@@ -16,7 +16,7 @@ from ._frontend import module_name, module_version
 
 import asyncio
 
-from enum import StrEnum
+from enum import Enum
 from contextlib import contextmanager, redirect_stdout
 
 
@@ -33,7 +33,7 @@ def wait_for_change(widget, value):
 
 
 
-class LedColor(StrEnum):
+class LedColor(str,Enum):
     off = "off"  
     pink = "pink"
     purple = "purple"
@@ -46,7 +46,7 @@ class LedColor(StrEnum):
     red = "red"
 
 
-class Port(StrEnum):
+class Port(str,Enum):
     A = "A"
     B = "B"
     AB = "AB"
