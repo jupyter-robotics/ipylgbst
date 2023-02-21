@@ -231,19 +231,25 @@ export class LegoBoostModel extends DOMWidgetModel {
 
 
 export class LegoBoostView extends DOMWidgetView {
-  
-  canvas: HTMLCanvasElement;
-  ctx: CanvasRenderingContext2D;
+
+  txt_connected: HTMLDivElement;
 
   txt_pitch:   HTMLDivElement;
   txt_roll:    HTMLDivElement;
   txt_distance  : HTMLDivElement;
-  
+  txt_color:   HTMLDivElement;
+
+  txt_port_a: HTMLDivElement;
+  txt_port_b: HTMLDivElement;
+  txt_port_ab: HTMLDivElement;
+  txt_port_c: HTMLDivElement;
+  txt_port_d: HTMLDivElement;
+
 
   meter_pitch:   HTMLMeterElement;
   meter_roll:    HTMLMeterElement;
   meter_distance  : HTMLMeterElement;
-
+  color_color: HTMLDivElement;
 
 
 
@@ -251,117 +257,120 @@ export class LegoBoostView extends DOMWidgetView {
 
     this.el.classList.add('custom-widget');
 
-    // sensor-canvas box
+
+    // connection box
+    let connection_box =  document.createElement("div");
+    connection_box.classList.add('box');
+    this.el.appendChild(connection_box);
+
+    // sensor box
     let sensor_box =  document.createElement("div");
     sensor_box.classList.add('box');
     this.el.appendChild(sensor_box);
 
-    // canvas
-    this.canvas = document.createElement("canvas");
-    this.ctx = this.canvas.getContext("2d")!;
-    sensor_box.appendChild(this.canvas);
-    this.canvas.width = 400
-    this.canvas.height = 100
+
+    // motor box
+    let motor_box =  document.createElement("div");
+    motor_box.classList.add('box');
+    this.el.appendChild(motor_box);
+
+
+    // connected
+    this.txt_connected = document.createElement("div");
+    this.txt_connected.textContent = "Disconnected"
+    connection_box.appendChild(this.txt_connected);
 
 
 
 
-    
-
-
-
-    // meter box
-    let meter_box =  document.createElement("div");
-    meter_box.classList.add('box');
-    this.el.appendChild(meter_box);
-
-
-
-
+    // pitch
     this.txt_pitch = document.createElement("div");
     this.txt_pitch.textContent = "pitch1:"
-    meter_box.appendChild(this.txt_pitch);
+    sensor_box.appendChild(this.txt_pitch);
     this.meter_pitch = document.createElement('meter');
-    meter_box.appendChild(this.meter_pitch);
+    sensor_box.appendChild(this.meter_pitch);
     this.meter_pitch.min = -90
     this.meter_pitch.max = 90
 
 
+
+
+
+
+    // pitch
+    this.txt_pitch = document.createElement("div");
+    this.txt_pitch.textContent = "pitch1:"
+    sensor_box.appendChild(this.txt_pitch);
+    this.meter_pitch = document.createElement('meter');
+    sensor_box.appendChild(this.meter_pitch);
+    this.meter_pitch.min = -90
+    this.meter_pitch.max = 90
+
+    // roll
     this.el.appendChild(document.createElement("br"));
     this.txt_roll = document.createElement("div");
     this.txt_roll.textContent = "roll:"
-    meter_box.appendChild(this.txt_roll);
+    sensor_box.appendChild(this.txt_roll);
     this.meter_roll = document.createElement('meter');
-    meter_box.appendChild(this.meter_roll);
+    sensor_box.appendChild(this.meter_roll);
     this.meter_roll.min = -90
     this.meter_roll.max = 90
 
-    meter_box.appendChild(document.createElement("br"));
+    // distance
+    sensor_box.appendChild(document.createElement("br"));
     this.txt_distance = document.createElement("div");
     this.txt_distance.textContent = "distance:"
-    meter_box.appendChild(this.txt_distance);
+    sensor_box.appendChild(this.txt_distance);
     this.meter_distance = document.createElement('meter');
-    meter_box.appendChild(this.meter_distance);
+    sensor_box.appendChild(this.meter_distance);
     this.meter_distance.min = 0
     this.meter_distance.max = 255
 
 
+    // color
+    sensor_box.appendChild(document.createElement("br"));
+    this.txt_color = document.createElement("div");
+    this.txt_color.textContent = "color:"
+    sensor_box.appendChild(this.txt_color);
+    this.color_color = document.createElement('div');
+    sensor_box.appendChild(this.color_color);
+    this.color_color.textContent = "None"
     this.changes();
+
+
+    // motor ports
+    motor_box.appendChild(document.createElement("br"));
+    this.txt_port_a = document.createElement("div");
+    this.txt_port_a.textContent = "Port A:"
+    motor_box.appendChild(this.txt_port_a);
+
+    motor_box.appendChild(document.createElement("br"));
+    this.txt_port_b = document.createElement("div");
+    this.txt_port_b.textContent = "Port B:"
+    motor_box.appendChild(this.txt_port_b);
+
+    motor_box.appendChild(document.createElement("br"));
+    this.txt_port_ab = document.createElement("div");
+    this.txt_port_ab.textContent = "Port AB:"
+    motor_box.appendChild(this.txt_port_ab);
+
+    motor_box.appendChild(document.createElement("br"));
+    this.txt_port_c = document.createElement("div");
+    this.txt_port_c.textContent = "Port C:"
+    motor_box.appendChild(this.txt_port_c);
+
+    motor_box.appendChild(document.createElement("br"));
+    this.txt_port_d = document.createElement("div");
+    this.txt_port_d.textContent = "Port D:"
+    motor_box.appendChild(this.txt_port_d);
+
+
     
     this.model.on('change:_device_info',   this.changes, this);
 
   }
 
-  degrees_to_radians(degrees:number)
-  {
-    return degrees * (Math.PI/180);
-  }
 
-
-  draw_circle_meter(x:number, y:number, r:number, angle:number){
-
-    // the circle itself
-    let ctx = this.ctx;
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, 2*Math.PI);
-    ctx.stroke();
-
-    // the line which indicates the angle
-    let a = this.degrees_to_radians(angle);
-    let dy = Math.sin(a)*r;
-    let dx = Math.cos(a)*r;
-
-    ctx.beginPath();
-    ctx.moveTo(x-dx, y-dy); // Move the pen to (30, 50)
-    ctx.lineTo(x+dx, y+dy); // Draw a line to (150, 100)
-    ctx.stroke();
-  }
-
-  draw_rectangle_meter(x:number, y:number, sx: number, sy:number, angle:number){
-    let ctx = this.ctx;
-    let cx = x + sx/2.0;
-    let cy = y + sy/2.0;
-
-    ctx.save();
-
-    ctx.strokeStyle = 'black';
-
-    ctx.translate(cx,cy);
-    ctx.rotate(this.degrees_to_radians(angle));
-    ctx.translate(-cx,-cy);
-
-
-    ctx.fillStyle = 'white';
-    ctx.fillRect(x, y, sx, sy);
-    ctx.fillStyle = 'gray';
-    ctx.fillRect(x, y+sy/2, sx, sy/2);
-
-    ctx.beginPath()
-    ctx.rect(x,y, sx, sy);
-    ctx.stroke();
-
-    ctx.restore();
-  }
 
   changes() {
 
@@ -370,19 +379,15 @@ export class LegoBoostView extends DOMWidgetView {
     const di = b.boost.deviceInfo;
 
 
-
-    let w = 30;
-    let y = 50;
-
     if(di.connected !== undefined && di.connected){
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.txt_connected.textContent = "Connected"
+
+
       this.meter_roll.value = di['tilt']['roll'];
       this.txt_roll.textContent = `roll: ${di['tilt']['roll']}`
-      this.draw_rectangle_meter(w*1, y, w,w, di['tilt']['roll']);
 
       this.meter_pitch.value = di['tilt']['pitch'];
       this.txt_pitch.textContent = `pitch1: ${di['tilt']['pitch']}`
-      this.draw_rectangle_meter(w*4, y, w*3,w, di['tilt']['pitch']);
 
       const d = di['distance'];
       if(d !== undefined && d!== null && isFinite(d)){
@@ -393,11 +398,29 @@ export class LegoBoostView extends DOMWidgetView {
         this.meter_distance.value  = 255;
         this.txt_distance.textContent = `distance: ∞`
       }
+
+      const c  = di['color']
+      if(c !== undefined && c!== null){
+
+        this.color_color.textContent = `${c}`
+        this.color_color.style.backgroundColor = c;
+        //this.txt_color.textContent = `color: ${c}`
+      }
+      else{
+        this.color_color.textContent = "None"
+        this.color_color.style.backgroundColor = "#444";
+        //this.txt_color.textContent = `color: None`
+      }
+      this.txt_port_a.textContent  = `Port A:  ${di['ports']["A"]['action']} ${di['ports']["A"]['angle']}`
+      this.txt_port_b.textContent  = `Port B:  ${di['ports']["B"]['action']} ${di['ports']["B"]['angle']}`
+      this.txt_port_ab.textContent = `Port AB: ${di['ports']["AB"]['action']} ${di['ports']["AB"]['angle']}`
+      this.txt_port_c.textContent  = `Port C:  ${di['ports']["C"]['action']} ${di['ports']["C"]['angle']}`
+      this.txt_port_d.textContent  = `Port D:  ${di['ports']["D"]['action']} ${di['ports']["D"]['angle']}`
     } 
     else{
-      this.draw_rectangle_meter(w*1, y, w,w, 0);
-      this.draw_rectangle_meter(w*3, y, w*3,w, 0);
+      this.txt_connected.textContent = "Disonnected";
     }
+
   }
 
   remove() {

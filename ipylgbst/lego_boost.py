@@ -128,11 +128,18 @@ class LegoBoostWidget(DOMWidget):
     def __init__(self, *args, **kwargs):
         super(LegoBoostWidget, self).__init__(*args, **kwargs)
 
+
     def run(self, amain, out=None):
         if out is None:
             out = Output()
             display(out)
         return asyncio.ensure_future(self._run_async(amain=amain, out=out))
+
+    def connect(self, out=None):
+        async def main(log):  
+            pass
+        self.run(main, out=out);
+
 
     async def _run_async(self, amain, out):
         def log(*args, **kwargs):
@@ -148,8 +155,8 @@ class LegoBoostWidget(DOMWidget):
             out.append_stdout(f"{val}")
 
         try:
-            await self.connect()
-            await amain(self,log)
+            await self._connect()
+            await amain(log)
         except Exception as e:
             out.append_stderr(f"{e}")
 
@@ -218,7 +225,7 @@ class LegoBoostWidget(DOMWidget):
         await self._next_command_frame()
 
 
-    async def connect(self):
+    async def _connect(self):
         self.send({"command":"connect"},[])
         await self._next_command_frame()
 
