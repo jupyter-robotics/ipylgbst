@@ -4,7 +4,7 @@
 # Copyright (c) Thorsten Beier.
 # Distributed under the terms of the Modified BSD License.
 
-from .lego_boost import LegoBoostWidget, LedColor,Port
+from .lego_boost import LegoBoostWidget, LedColor,Port, Sensor
 from ._version import __version__, version_info
 
 def _jupyter_labextension_paths():

@@ -15,12 +15,12 @@ import '../css/widget.css';
 
 
 import LegoBoost from 'lego-boost-browser';
-
-
-
-
-
 let boost = new LegoBoost();
+
+
+
+
+
 
 export class LegoBoostModel extends DOMWidgetModel {
   defaults() {
@@ -32,18 +32,25 @@ export class LegoBoostModel extends DOMWidgetModel {
       _view_name: LegoBoostModel.view_name,
       _view_module: LegoBoostModel.view_module,
       _view_module_version: LegoBoostModel.view_module_version,
-      polling_frame: 0,
-      command_frame: 0,
-      device_info:{}
+      _device_info:{}
     };
   }
 
-  poll(){
-   
-    this.set('device_info',this.boost.deviceInfo)
-    this.set('polling_frame', this.get('polling_frame')+1);
+  private save_device_info(){
+    var device_info = {
+      polling_frame:this.polling_frame,
+      command_frame:this.command_frame,
+      ... this.boost.deviceInfo
+    };
+
+    this.set('_device_info',device_info)
+    //this.get('device_info')['polling_frame'] = this.polling_frame;
     this.save_changes();
-    
+  }
+
+  poll(){
+    this.polling_frame += 1;
+    this.save_device_info();
   }
   polling(){
     this.poll();
@@ -57,7 +64,6 @@ export class LegoBoostModel extends DOMWidgetModel {
 
 
   initialize(attributes: any, options: any) {
-    console.log("INITIALIZE")
     super.initialize(attributes, options);  
     this.boost =  boost; //new LegoBoost();
 
@@ -65,8 +71,10 @@ export class LegoBoostModel extends DOMWidgetModel {
     this.on('msg:custom', (command: any, buffers: any) => {
       this.currentProcessing = this.currentProcessing.then(async () => {
         await this.onCommand(command, buffers);
-        this.set('command_frame', this.get('command_frame') + 1 );
-        this.save_changes();
+
+        this.command_frame += 1;
+        this.save_device_info();
+        console.log("done cmd and save",command,this.command_frame);
       });
     });
   }
@@ -172,21 +180,19 @@ export class LegoBoostModel extends DOMWidgetModel {
         await sleep(100);
         // console.log("post sleep")
         if(this.boost.deviceInfo.connected && this.boost.hub !== undefined && this.boost.hub.connected ){
-          console.log("early exit1")
           break
         }
       } 
-      
       await sleep(4000);
-     
     }
     else{
       console.log("alreay connected")
     }
-    
+
     if(!this.polling_is_running){
       this.polling_is_running = true;
-      this.polling();
+      setTimeout(this.polling.bind(this), 200);
+      //this.polling();
     }
 
   }
@@ -208,6 +214,9 @@ export class LegoBoostModel extends DOMWidgetModel {
   }
   boost: LegoBoost;
 
+  private polling_frame: number = 0;
+  private command_frame: number = 0;
+
   private polling_is_running: Boolean = false;
   stop_polling: Boolean = false;
   private currentProcessing: Promise<void> = Promise.resolve();
@@ -221,12 +230,15 @@ export class LegoBoostModel extends DOMWidgetModel {
 }
 
 
-
 export class LegoBoostView extends DOMWidgetView {
+  
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+
   txt_pitch:   HTMLDivElement;
   txt_roll:    HTMLDivElement;
   txt_distance  : HTMLDivElement;
-
+  
 
   meter_pitch:   HTMLMeterElement;
   meter_roll:    HTMLMeterElement;
@@ -234,16 +246,43 @@ export class LegoBoostView extends DOMWidgetView {
 
 
 
+
   render() {
 
     this.el.classList.add('custom-widget');
 
+    // sensor-canvas box
+    let sensor_box =  document.createElement("div");
+    sensor_box.classList.add('box');
+    this.el.appendChild(sensor_box);
+
+    // canvas
+    this.canvas = document.createElement("canvas");
+    this.ctx = this.canvas.getContext("2d")!;
+    sensor_box.appendChild(this.canvas);
+    this.canvas.width = 400
+    this.canvas.height = 100
+
+
+
+
+    
+
+
+
+    // meter box
+    let meter_box =  document.createElement("div");
+    meter_box.classList.add('box');
+    this.el.appendChild(meter_box);
+
+
+
 
     this.txt_pitch = document.createElement("div");
-    this.txt_pitch.textContent = "pitch:"
-    this.el.appendChild(this.txt_pitch);
+    this.txt_pitch.textContent = "pitch1:"
+    meter_box.appendChild(this.txt_pitch);
     this.meter_pitch = document.createElement('meter');
-    this.el.appendChild(this.meter_pitch);
+    meter_box.appendChild(this.meter_pitch);
     this.meter_pitch.min = -90
     this.meter_pitch.max = 90
 
@@ -251,26 +290,77 @@ export class LegoBoostView extends DOMWidgetView {
     this.el.appendChild(document.createElement("br"));
     this.txt_roll = document.createElement("div");
     this.txt_roll.textContent = "roll:"
-    this.el.appendChild(this.txt_roll);
+    meter_box.appendChild(this.txt_roll);
     this.meter_roll = document.createElement('meter');
-    this.el.appendChild(this.meter_roll);
+    meter_box.appendChild(this.meter_roll);
     this.meter_roll.min = -90
     this.meter_roll.max = 90
 
-    this.el.appendChild(document.createElement("br"));
+    meter_box.appendChild(document.createElement("br"));
     this.txt_distance = document.createElement("div");
     this.txt_distance.textContent = "distance:"
-    this.el.appendChild(this.txt_distance);
+    meter_box.appendChild(this.txt_distance);
     this.meter_distance = document.createElement('meter');
-    this.el.appendChild(this.meter_distance);
+    meter_box.appendChild(this.meter_distance);
     this.meter_distance.min = 0
     this.meter_distance.max = 255
 
 
     this.changes();
     
-    this.model.on('change:polling_frame',   this.changes, this);
+    this.model.on('change:_device_info',   this.changes, this);
 
+  }
+
+  degrees_to_radians(degrees:number)
+  {
+    return degrees * (Math.PI/180);
+  }
+
+
+  draw_circle_meter(x:number, y:number, r:number, angle:number){
+
+    // the circle itself
+    let ctx = this.ctx;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, 2*Math.PI);
+    ctx.stroke();
+
+    // the line which indicates the angle
+    let a = this.degrees_to_radians(angle);
+    let dy = Math.sin(a)*r;
+    let dx = Math.cos(a)*r;
+
+    ctx.beginPath();
+    ctx.moveTo(x-dx, y-dy); // Move the pen to (30, 50)
+    ctx.lineTo(x+dx, y+dy); // Draw a line to (150, 100)
+    ctx.stroke();
+  }
+
+  draw_rectangle_meter(x:number, y:number, sx: number, sy:number, angle:number){
+    let ctx = this.ctx;
+    let cx = x + sx/2.0;
+    let cy = y + sy/2.0;
+
+    ctx.save();
+
+    ctx.strokeStyle = 'black';
+
+    ctx.translate(cx,cy);
+    ctx.rotate(this.degrees_to_radians(angle));
+    ctx.translate(-cx,-cy);
+
+
+    ctx.fillStyle = 'white';
+    ctx.fillRect(x, y, sx, sy);
+    ctx.fillStyle = 'gray';
+    ctx.fillRect(x, y+sy/2, sx, sy/2);
+
+    ctx.beginPath()
+    ctx.rect(x,y, sx, sy);
+    ctx.stroke();
+
+    ctx.restore();
   }
 
   changes() {
@@ -279,12 +369,20 @@ export class LegoBoostView extends DOMWidgetView {
 
     const di = b.boost.deviceInfo;
 
+
+
+    let w = 30;
+    let y = 50;
+
     if(di.connected !== undefined && di.connected){
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.meter_roll.value = di['tilt']['roll'];
       this.txt_roll.textContent = `roll: ${di['tilt']['roll']}`
+      this.draw_rectangle_meter(w*1, y, w,w, di['tilt']['roll']);
 
       this.meter_pitch.value = di['tilt']['pitch'];
-      this.txt_pitch.textContent = `pitch: ${di['tilt']['pitch']}`
+      this.txt_pitch.textContent = `pitch1: ${di['tilt']['pitch']}`
+      this.draw_rectangle_meter(w*4, y, w*3,w, di['tilt']['pitch']);
 
       const d = di['distance'];
       if(d !== undefined && d!== null && isFinite(d)){
@@ -296,6 +394,10 @@ export class LegoBoostView extends DOMWidgetView {
         this.txt_distance.textContent = `distance: ∞`
       }
     } 
+    else{
+      this.draw_rectangle_meter(w*1, y, w,w, 0);
+      this.draw_rectangle_meter(w*3, y, w*3,w, 0);
+    }
   }
 
   remove() {

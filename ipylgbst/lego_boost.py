@@ -20,16 +20,37 @@ from enum import Enum
 from contextlib import contextmanager, redirect_stdout
 
 
+
+from io import StringIO
+import sys
+
+
+
+# examine mystdout.getvalue()
+
+
 def wait_for_change(widget, value):
     future = asyncio.Future()
     def getvalue(change):
-        # print("get value",change.new,change.old)
         # make the new value available
         future.set_result(change.new)
         widget.unobserve(getvalue, value)
     widget.observe(getvalue, value)
     return future
 
+
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
 
 
@@ -53,9 +74,25 @@ class Port(str,Enum):
     C = "C"
     D = "D"
 
+
+class Sensor(object):
+    def __init__(self, name):
+        self.name = name
+
+    def value(self, boost):
+        if self.name == "distance":
+            return boost.get_distance()
+        elif self.name == "color":
+            return boost.get_color()
+        else:
+            raise NotImplementedError
+
+
 DEFAULT_PORT_INFO = {'action':'','angle':0}
 
 DEFAULT_DEVICE_INFO = {
+    'command_frame':0,
+    'polling_frame':0,
     'ports':{
         "A":DEFAULT_PORT_INFO,
         "B":DEFAULT_PORT_INFO,
@@ -85,78 +122,100 @@ class LegoBoostWidget(DOMWidget):
     _view_module = Unicode(module_name).tag(sync=True)
     _view_module_version = Unicode(module_version).tag(sync=True)
 
-    polling_frame = Int(0,read_only=True).tag( sync=True)
-    command_frame = Int(0,read_only=True).tag( sync=True)
     
-    device_info = Dict(DEFAULT_DEVICE_INFO, read_only=True).tag( sync=True)
-
-
+    _device_info = Dict(DEFAULT_DEVICE_INFO, read_only=True).tag( sync=True)
 
     def __init__(self, *args, **kwargs):
         super(LegoBoostWidget, self).__init__(*args, **kwargs)
 
-
-    async def run_async(self, amain, out=None):
-        if out is None:
-            out = Output()
-            
-            display(out)
-        
-        out.write = out.append_stdout
-        # with redirect_stdout(out):
-        try:
-            await amain(self, out)
-        except Exception as e:
-            out.append_stdout(f"exception happend {str(e)}\n")
-            print("exception happend", e)
-
-
     def run(self, amain, out=None):
         if out is None:
             out = Output()
-            out.write = out.append_stdout
             display(out)
+        return asyncio.ensure_future(self._run_async(amain=amain, out=out))
+
+    async def _run_async(self, amain, out):
+        def log(*args, **kwargs):
+
+            old_stdout = sys.stdout
+            sys.stdout = mystdout = StringIO()
+
+            print(*args,**kwargs)
+
+            sys.stdout = old_stdout
+
+            val = mystdout.getvalue()
+            out.append_stdout(f"{val}")
+
+        try:
+            await self.connect()
+            await amain(self,log)
+        except Exception as e:
+            out.append_stderr(f"{e}")
 
 
-        return asyncio.ensure_future(self.run_async(amain=amain, out=out))
 
 
     async def _next_command_frame(self):
-        await wait_for_change(self, 'command_frame')
-
-
-    def _disconnect(self):
-        self.send({"command":"disconnect"},[])
-
+        old = int(self._device_info['command_frame'])
+        while True:
+            await self.poll()
+            new  = int(self._device_info['command_frame'])
+            if new > old:
+                break
+            elif new < old:
+                raise RuntimeError(f"internal error! {old=} {new=}")
 
     async def poll(self):
-        #self.send({"command":"poll", "args":[]},[])
-        #await wait_for_change(self, 'command_frame')
-        await wait_for_change(self, 'polling_frame')
+        await wait_for_change(self, '_device_info')
 
-    async def get_device_info(self, poll=True):
-        if poll:
-            await self.poll()
-        return self.device_info
-
-    async def get_distance(self, poll=True):
-        d = (await self.get_device_info(poll=poll)).get('distance',None)
+    async def get_distance(self):
+        d = self._device_info['distance']
         if d is None:
-            d = float('Infinity')
+            d = float('inf')
         return d
 
-    async def get_roll(self,poll=True):
-        return (await self.get_device_info(poll=poll))['tilt']['roll']
+    async def get_roll(self):
+        await self.poll()
+        return self._device_info['tilt']['roll']
 
-    async def get_pitch(self,poll=True):
-        return (await self.get_device_info(poll=poll))['tilt']['pitch']
+    async def get_pitch(self):
+        await self.poll()
+        return self._device_info['tilt']['pitch']
 
-    async def get_angle(self, port, poll=True):
-        return (await self.get_device_info(poll=poll))["ports"][str(port)]['angle']
+    async def get_color(self):
+        await self.poll()
+        return self._device_info['color']
 
-    async def get_action(self, port,poll=True):
-        return (await self.get_device_info(poll=poll))["ports"][str(port)]['action']
 
+    async def motor_angle(self, port, angle, power, wait=True):
+        args = [str(port), float(angle),int(power),bool(wait)]
+        self.send({"command":"motorAngleAsync", "args":args},[])
+        await self._next_command_frame()
+
+    async def motor_angle_multi(self, angle, power_a, power_b,wait=True):
+        args = [float(angle),int(power_a),int(power_b),bool(wait)]
+        self.send({"command":"motorAngleMultiAsync", "args":args},[])
+        await self._next_command_frame()
+
+    async def motor_time(self, port, seconds, power, wait=True):
+        args = [str(port), float(seconds),int(power),bool(wait)]
+        self.send({"command":"motorTimeAsync", "args":args},[])
+        await self._next_command_frame()
+
+
+
+    async def motor_time_multi(self, seconds, power_a, power_b,wait=True):
+        args = [float(seconds),int(power_a),int(power_b),bool(wait)]
+        self.send({"command":"motorTimeMultiAsync", "args":args},[])
+        await self._next_command_frame()
+
+
+    async def set_led(self, color):
+        if isinstance(color, LedColor):
+            color = color.value
+        self.send({"command":"ledAsync", "args":[color]},[])
+        await self._next_command_frame()
 
 
     async def connect(self):
@@ -166,79 +225,6 @@ class LegoBoostWidget(DOMWidget):
     async def disconnect(self):
         self._disconnect()
         await self._next_command_frame()
-
-    async def drive(self, distance, wait=False):
-        args = [int(distance), bool(wait)]
-        self.send({"command":"drive", "args":args},[])
-        await self._next_command_frame()
-
-    async def turn(self, degrees, wait=False):
-        args = [float(degrees), bool(wait)]
-        self.send({"command":"turn", "args":args},[])
-        await self._next_command_frame()
-
-    async def driveUntil(self, distance=0, wait=False):
-        args = [float(distance), bool(wait)]
-        self.send({"command":"driveUntil", "args":args},[])
-        await self._next_command_frame()
-
-    async def turnUntil(self, direction=1, wait=False):
-        args = [float(direction), bool(wait)]
-        self.send({"command":"turnUntil", "args":args},[])
-        await self._next_command_frame()
-
-
-    async def ledAsync(self, color):
-        self.send({"command":"ledAsync", "args":[str(color)]},[])
-        await self._next_command_frame()
-
-
-
-
-    async def motorTime(self, port, seconds, duty_cycle=100):
-        args = [str(port), float(seconds),int(duty_cycle)]
-        self.send({"command":"motorTime", "args":args},[])
-        await self._next_command_frame()
-
-    async def motorTimeMulti(self, seconds, duty_cycle_a=100, duty_cycle_b=100):
-        args = [float(seconds),int(duty_cycle_a), int(duty_cycle_b)]
-        self.send({"command":"motorTimeMulti", "args":args},[])
-        await self._next_command_frame()
-
-    async def motorTimeAsync(self, port, seconds, duty_cycle=100, wait=False):
-        args = [str(port), float(seconds),int(duty_cycle),bool(wait)]
-        self.send({"command":"motorTimeAsync", "args":args},[])
-        await self._next_command_frame()
-
-    async def motorTimeMultiAsync(self, seconds, duty_cycle_a=100, duty_cycle_b=100,wait=False):
-        args = [float(seconds),int(duty_cycle_a),int(duty_cycle_b),bool(wait)]
-        self.send({"command":"motorTimeMultiAsync", "args":args},[])
-        await self._next_command_frame()
-
-    
-    async def motorAngle(self, port, angle, duty_cycle=100): 
-        args = [str(port), float(angle),int(duty_cycle)]
-        self.send({"command":"motorAngle", "args":args},[])
-        await self._next_command_frame()
-
-    async def motorAngleMulti(self, angle, duty_cycle_a=100, duty_cycle_b=100):
-        args = [float(angle),int(duty_cycle_a),int(duty_cycle_b)]
-        self.send({"command":"motorAngleMulti", "args":args},[])
-        await self._next_command_frame()
-
-
-    async def motorAngleAsync(self, port, angle, duty_cycle=100, wait=False):
-        args = [str(port), float(angle),int(duty_cycle),bool(wait)]
-        self.send({"command":"motorAngleAsync", "args":args},[])
-        await self._next_command_frame()
-
-
-    async def motorAngleMultiAsync(self, angle, duty_cycle_a=100, duty_cycle_b=100,wait=False):
-        args = [float(angle),int(duty_cycle_a),int(duty_cycle_b),bool(wait)]
-        self.send({"command":"motorAngleMultiAsync", "args":args},[])
-        await self._next_command_frame()
-
-
 
 
 
