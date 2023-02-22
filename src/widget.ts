@@ -280,9 +280,6 @@ export class LegoBoostView extends DOMWidgetView {
     this.txt_connected.textContent = "Disconnected"
     connection_box.appendChild(this.txt_connected);
 
-
-
-
     // pitch
     this.txt_pitch = document.createElement("div");
     this.txt_pitch.textContent = "pitch1:"
@@ -292,19 +289,6 @@ export class LegoBoostView extends DOMWidgetView {
     this.meter_pitch.min = -90
     this.meter_pitch.max = 90
 
-
-
-
-
-
-    // pitch
-    this.txt_pitch = document.createElement("div");
-    this.txt_pitch.textContent = "pitch1:"
-    sensor_box.appendChild(this.txt_pitch);
-    this.meter_pitch = document.createElement('meter');
-    sensor_box.appendChild(this.meter_pitch);
-    this.meter_pitch.min = -90
-    this.meter_pitch.max = 90
 
     // roll
     this.el.appendChild(document.createElement("br"));
@@ -418,7 +402,7 @@ export class LegoBoostView extends DOMWidgetView {
       this.txt_port_d.textContent  = `Port D:  ${di['ports']["D"]['action']} ${di['ports']["D"]['angle']}`
     } 
     else{
-      this.txt_connected.textContent = "Disonnected";
+      this.txt_connected.textContent = "Disconnected";
     }
 
   }
