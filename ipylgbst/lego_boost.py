@@ -23,7 +23,7 @@ from contextlib import contextmanager, redirect_stdout
 
 from io import StringIO
 import sys
-
+import math
 
 
 # examine mystdout.getvalue()
@@ -178,8 +178,10 @@ class LegoBoostWidget(DOMWidget):
 
     async def get_distance(self):
         d = self._device_info['distance']
-        if d is None:
+        if d is None :
             d = float('inf')
+        if math.isfinite(d) and d > 255.0:
+            d = 255.0
         return d
 
     async def get_roll(self):
