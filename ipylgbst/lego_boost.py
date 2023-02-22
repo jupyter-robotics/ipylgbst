@@ -210,8 +210,6 @@ class LegoBoostWidget(DOMWidget):
         self.send({"command":"motorTimeAsync", "args":args},[])
         await self._next_command_frame()
 
-
-
     async def motor_time_multi(self, seconds, power_a, power_b,wait=True):
         args = [float(seconds),int(power_a),int(power_b),bool(wait)]
         self.send({"command":"motorTimeMultiAsync", "args":args},[])
