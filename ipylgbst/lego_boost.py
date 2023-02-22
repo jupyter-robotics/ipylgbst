@@ -36,24 +36,9 @@ def wait_for_change(widget, value):
         future.set_result(change.new)
         widget.unobserve(getvalue, value)
     widget.observe(getvalue, value)
-    return future
-
-
-
-
+    return fut
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-
-
-
 class LedColor(str,Enum):
     off = "off"  
     pink = "pink"
