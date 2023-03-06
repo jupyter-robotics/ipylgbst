@@ -16,7 +16,7 @@ jobs:
           pip install .
           jupyter labextension develop --overwrite .
           yarn run build
-          jupyter lite build --contents=../examples
+          jupyter lite build --contents=examples
 
 
 
