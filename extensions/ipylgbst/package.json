@@ -1,6 +1,6 @@
 {
   "name": "ipylgbst",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "A widget library for controlling LEGO® BOOST via web-bluetooth",
   "keywords": [
     "jupyter",
@@ -95,7 +95,7 @@
       }
     },
     "_build": {
-      "load": "static/remoteEntry.d3c5d0e7da1c32ca90eb.js",
+      "load": "static/remoteEntry.03772f357de6a94970ee.js",
       "extension": "./extension"
     }
   }
