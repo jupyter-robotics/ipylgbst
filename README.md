@@ -1,11 +1,9 @@
 
 # ipylgbst
 
-[![Build Status](https://travis-ci.org/jupyterlab-contrib-ipylgbst.svg?branch=master)](https://travis-ci.org/jupyterlab-contrib-ipylgbst)
-[![codecov](https://codecov.io/gh/jupyterlab-contrib-ipylgbst/branch/master/graph/badge.svg)](https://codecov.io/gh/jupyterlab-contrib-ipylgbst)
+[![Github Actions Status](https://github.com/jupyterlab-contrib/ipylgbst/workflows/Build/badge.svg)](https://github.com/jupyterlab-contrib/rise/actions/workflows/build.yml) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jupyterlab-contrib/ipylgbst/main)
 
-
-A widget library for controlling LEGO® BOOST via web-bluetooth
+A widget library for controlling LEGO® BOOST via web-bluetooth.
 
 ## Installation
 
