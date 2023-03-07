@@ -1,11 +1,9 @@
 
 # ipylgbst
 
-[![Build Status](https://travis-ci.org/DerThorsten/ipylgbst.svg?branch=master)](https://travis-ci.org/DerThorsten/ipylgbst)
-[![codecov](https://codecov.io/gh/DerThorsten/ipylgbst/branch/master/graph/badge.svg)](https://codecov.io/gh/DerThorsten/ipylgbst)
+[![Github Actions Status](https://github.com/jupyterlab-contrib/ipylgbst/workflows/Build/badge.svg)](https://github.com/jupyterlab-contrib/rise/actions/workflows/build.yml) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jupyterlab-contrib/ipylgbst/main)
 
-
-A widget library for controlling LEGO® BOOST via web-bluetooth
+A widget library for controlling LEGO® BOOST via web-bluetooth.
 
 ## Installation
 
@@ -15,15 +13,10 @@ You can install using `pip`:
 pip install ipylgbst
 ```
 
-If you are using Jupyter Notebook 5.2 or earlier, you may also need to enable
-the nbextension:
-```bash
-jupyter nbextension enable --py [--sys-prefix|--user|--system] ipylgbst
-```
-
 ## Development Installation
 
 Create a dev environment:
+
 ```bash
 conda create -n ipylgbst-dev -c conda-forge nodejs yarn python jupyterlab
 conda activate ipylgbst-dev
@@ -42,20 +35,15 @@ jupyter labextension develop --overwrite .
 yarn run build
 ```
 
-For classic notebook, you need to run:
-
-```
-jupyter nbextension install --sys-prefix --symlink --overwrite --py ipylgbst
-jupyter nbextension enable --sys-prefix --py ipylgbst
-```
-
 Note that the `--symlink` flag doesn't work on Windows, so you will here have to run
 the `install` command every time that you rebuild your extension. For certain installations
 you might also need another flag instead of `--sys-prefix`, but we won't cover the meaning
 of those flags here.
 
 ### How to see your changes
-#### Typescript:
+
+#### Typescript
+
 If you use JupyterLab to develop then you can watch the source directory and run JupyterLab at the same time in different
 terminals to watch for changes in the extension's source and automatically rebuild the widget.
 
@@ -68,7 +56,8 @@ jupyter lab
 
 After a change wait for the build to finish and then refresh your browser and the changes should take effect.
 
-#### Python:
+#### Python
+
 If you make a change to the python code then you will need to restart the notebook kernel to have it take effect.
 
 ## Updating the version
@@ -80,4 +69,3 @@ By default it will also create a tag.
 pip install tbump
 tbump <new-version>
 ```
-
