@@ -55,7 +55,7 @@ test = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/DerThorsten/ipylgbst"
+Homepage = "https://github.com/jupyterlab-contrib-ipylgbst"
 
 [tool.hatch.build]
 artifacts = [

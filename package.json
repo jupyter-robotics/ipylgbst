@@ -13,9 +13,9 @@
     "dist/*.js",
     "css/*.css"
   ],
-  "homepage": "https://github.com/DerThorsten/ipylgbst",
+  "homepage": "https://github.com/jupyterlab-contrib-ipylgbst",
   "bugs": {
-    "url": "https://github.com/DerThorsten/ipylgbst/issues"
+    "url": "https://github.com/jupyterlab-contrib-ipylgbst/issues"
   },
   "license": "BSD-3-Clause",
   "author": {
@@ -26,7 +26,7 @@
   "types": "./lib/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/DerThorsten/ipylgbst"
+    "url": "https://github.com/jupyterlab-contrib-ipylgbst"
   },
   "scripts": {
     "build": "yarn run build:lib && yarn run build:nbextension && yarn run build:labextension:dev",
