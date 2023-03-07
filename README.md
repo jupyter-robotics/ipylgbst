@@ -5,6 +5,8 @@
 
 A widget library for controlling LEGO® BOOST via web-bluetooth.
 
+https://user-images.githubusercontent.com/904752/223380492-a6b3dc34-064c-4b2c-a1d9-71f7712a8f57.mp4
+
 ## Installation
 
 You can install using `pip`:
