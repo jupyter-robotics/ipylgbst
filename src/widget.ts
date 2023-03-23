@@ -15,7 +15,7 @@ import '../css/widget.css';
 import LegoBoost from 'lego-boost-browser';
 
 
-// we use globals for the lego boost robot since connecting to 
+// we use globals for the lego boost robot since connecting to
 // them takes a long time. If the model would hold the
 // boost instance, we would need to re-connect any time
 // we restart the kernel.
@@ -24,9 +24,8 @@ interface deviceCache {
   [key: string]: any;
 }
 
-var device_cache: deviceCache = {
-
-}
+let device_cache: deviceCache = {
+};
 
 
 export class LegoBoostModel extends DOMWidgetModel {
@@ -40,8 +39,8 @@ export class LegoBoostModel extends DOMWidgetModel {
       _view_module: LegoBoostModel.view_module,
       _view_module_version: LegoBoostModel.view_module_version,
       _device_info: {},
-      name: "device1",
-      n_lanes: 3
+      name: 'device1',
+      n_lanes: 3,
     };
   }
 
@@ -72,7 +71,7 @@ export class LegoBoostModel extends DOMWidgetModel {
   initialize(attributes: any, options: any) {
     super.initialize(attributes, options);
 
-    const n_lanes: Number = this.get('n_lanes');
+    const n_lanes: number = this.get('n_lanes');
     console.log(`initialize with n_lanes=${n_lanes}`, this);
 
     const name: string = this.get('name');
@@ -87,10 +86,10 @@ export class LegoBoostModel extends DOMWidgetModel {
 
       this.lanes[lane] = this.lanes[lane].then(async () => {
 
-        const await_in_kernel = <boolean>(command['args']);
-        const await_in_frontend = <boolean>(command['args']);
+        const await_in_kernel = <boolean>command['args'];
+        const await_in_frontend = <boolean>command['args'];
 
-        let p: Promise<void> = this.onCommand(command, buffers);
+        const p: Promise<void> = this.onCommand(command, buffers);
         if (await_in_frontend) {
           await p;
         }
@@ -172,7 +171,7 @@ export class LegoBoostModel extends DOMWidgetModel {
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
     if (!this.boost.deviceInfo.connected) {
-      console.log("not connected")
+      console.log('not connected yet');
       await this.boost.connect();
 
       for (let i = 0; i < 30; i++) {
@@ -189,7 +188,7 @@ export class LegoBoostModel extends DOMWidgetModel {
     }
 
     // a bit ugly do this here
-    const n_lanes: Number = this.get('n_lanes');
+    const n_lanes: number = this.get('n_lanes');
     while (this.lane_cmd_index.length < n_lanes) {
       this.lane_cmd_index.push(0);
     }
