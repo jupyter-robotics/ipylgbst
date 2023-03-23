@@ -14,7 +14,6 @@ import '../css/widget.css';
 
 import LegoBoost from 'lego-boost-browser';
 
-
 // we use globals for the lego boost robot since connecting to
 // them takes a long time. If the model would hold the
 // boost instance, we would need to re-connect any time
@@ -24,8 +23,7 @@ interface deviceCache {
   [key: string]: any;
 }
 
-let device_cache: deviceCache = {
-};
+const device_cache: deviceCache = {};
 
 
 export class LegoBoostModel extends DOMWidgetModel {
@@ -85,10 +83,8 @@ export class LegoBoostModel extends DOMWidgetModel {
       const lane = command['lane'];
 
       this.lanes[lane] = this.lanes[lane].then(async () => {
-
         const await_in_kernel = <boolean>command['args'];
         const await_in_frontend = <boolean>command['args'];
-
         const p: Promise<void> = this.onCommand(command, buffers);
         if (await_in_frontend) {
           await p;
