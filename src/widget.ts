@@ -40,7 +40,8 @@ export class LegoBoostModel extends DOMWidgetModel {
       _view_module: LegoBoostModel.view_module,
       _view_module_version: LegoBoostModel.view_module_version,
       _device_info: {},
-      name: "device1"
+      name: "device1",
+      n_lanes: 3
     };
   }
 
@@ -71,12 +72,15 @@ export class LegoBoostModel extends DOMWidgetModel {
   initialize(attributes: any, options: any) {
     super.initialize(attributes, options);
 
-    const name : string = this.get('name');
-    console.log(`initialize name=${name}` )
-    if(!(name in device_cache)){
+    const n_lanes : Number = this.get('n_lanes');
+    console.log(`initialize with n_lanes=${n_lanes}`,this );
 
+    const name : string = this.get('name');
+    console.log(`initialize with name=${name}`);
+    if(!(name in device_cache)){
       device_cache[name] = new LegoBoost();
     }
+
     this.boost = device_cache[name];
     this.on('msg:custom', async (command: any, buffers: any) => {
       const lane = command['lane'];
@@ -85,8 +89,6 @@ export class LegoBoostModel extends DOMWidgetModel {
 
           const await_in_kernel = <boolean>(command['args']);
           const await_in_frontend = <boolean>(command['args']);
-
-
 
           let p : Promise<void> = this.onCommand(command, buffers);
           if(await_in_frontend){
@@ -186,6 +188,12 @@ export class LegoBoostModel extends DOMWidgetModel {
       await sleep(4000);
     }
 
+    // a bit ugly do this here
+    const n_lanes : Number = this.get('n_lanes');
+    while(this.lane_cmd_index.length < n_lanes){
+      this.lane_cmd_index.push(0);
+    }
+
     if (!this.polling_is_running) {
       this.polling_is_running = true;
       setTimeout(this.polling.bind(this), 200);
@@ -213,7 +221,7 @@ export class LegoBoostModel extends DOMWidgetModel {
   stop_polling = false;
   //private currentProcessing: Promise<void> = Promise.resolve();
 
-  private lane_cmd_index: Array<number> = [0, 0, 0];
+  private lane_cmd_index: Array<number> = [0];
   private lanes: Array<Promise<void>> = [
     Promise.resolve(),
     Promise.resolve(),

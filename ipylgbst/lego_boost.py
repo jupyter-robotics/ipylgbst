@@ -140,7 +140,7 @@ class LegoBoostLaneProxy(object):
 
     async def get_distance_async(self):
         await self._poll()
-        d = self._device_info["distance"]
+        d = self.boost._device_info["distance"]
         if d is None:
             d = float("inf")
         if math.isfinite(d) and d > 255.0:
@@ -150,17 +150,17 @@ class LegoBoostLaneProxy(object):
     async def get_roll_async(self):
         """Get the roll angle of the Boost Move Hub."""
         await self._poll()
-        return self._device_info["tilt"]["roll"]
+        return self.boost._device_info["tilt"]["roll"]
 
     async def get_pitch_async(self):
         """Get the pitch angle of the Boost Move Hub."""
         await self._poll()
-        return self._device_info["tilt"]["pitch"]
+        return self.boost._device_info["tilt"]["pitch"]
 
     async def get_color_async(self):
         """Get the color of the Boost Move Hub."""
         await self._poll()
-        return self._device_info["color"]
+        return self.boost._device_info["color"]
 
     async def motor_angle_async(self, port, angle, power):
         """
@@ -173,6 +173,8 @@ class LegoBoostLaneProxy(object):
             
             Warning: This function needs to be awaited before the next command can be executed.
         """
+        if isinstance(port, Port):
+            port = port.value
         wait = True
         async with self._async_command_context():
             self._send(
@@ -213,6 +215,8 @@ class LegoBoostLaneProxy(object):
 
             Warning: This function needs to be awaited before the next command can be executed. 
         """
+        if isinstance(port, Port):
+            port = port.value
         wait = True
         async with self._async_command_context():
             self._send(
@@ -234,6 +238,7 @@ class LegoBoostLaneProxy(object):
             Warning: This function needs to be awaited before the next command can be executed.
         """
         wait = True
+
         async with self._async_command_context():
             self._send(
                 command="motorTimeMultiAsync",
@@ -270,11 +275,13 @@ class LegoBoostLaneProxy(object):
             
             Warning: even though this function is not async, it is non-blocking.
         """
+        if isinstance(port, Port):
+            port = port.value
         self._send(
             command="motorTime",
             await_in_kernel=False,
             await_in_frontend=False,
-            args=[int(port), float(seconds), int(power)],
+            args=[str(port), float(seconds), int(power)],
         )
 
     def motor_angle(self, port, angle, power):
@@ -288,11 +295,13 @@ class LegoBoostLaneProxy(object):
             
             Warning: even though this function is not async, it is non-blocking.
         """
+        if isinstance(port, Port):
+            port = port.value
         self._send(
             command="motorAngle",
             await_in_kernel=False,
             await_in_frontend=False,
-            args=[int(port), float(angle), int(power)],
+            args=[str(port), float(angle), int(power)],
         )
 
     def motor_time_multi(self, seconds, power_a, power_b):
@@ -382,50 +391,61 @@ class LegoBoostWidget(DOMWidget):
     _view_module_version = Unicode(module_version).tag(sync=True)
     _device_info = Dict(DEFAULT_DEVICE_INFO, read_only=True).tag(sync=True)
     name = Unicode("device1").tag(sync=True)
+    n_lanes =Int(3).tag(sync=True)
 
     def __init__(self, *args, **kwargs):
         super(LegoBoostWidget, self).__init__(*args, **kwargs)
+        
         self._run_lock = asyncio.Lock()
+        self._lane_locks = [asyncio.Lock()  for i in range(self.n_lanes)]
 
-        self._lane_locks = [asyncio.Lock(), asyncio.Lock(), asyncio.Lock()]
+    def run_async_program(self, program, lane=0, output=None):
 
-    def run_async_program(self, program, out=None):
-        return self.run_async_programs_concurrently(programs=[program], out=out)
+        if lane < 0 or lane >= self.n_lanes :
+            raise RuntimeError(f"lane must be >=0 and < {self.n_lanes} but is {lane}")
 
-    def run_async_programs_concurrently(self, programs, out=None):
-        if out is None:
-            out = Output()
-            display(out)
+        if output is None:
+            output = Output()
+            display(output)
+        return asyncio.ensure_future(
+            self._run_async_program(lane=lane, program=program, output=output)
+        )
+
+
+    def run_async_programs_concurrently(self, programs, output=None):
+        if output is None:
+            output = Output()
+            display(output)
         np = len(programs)
-        if np < 1 or np > 3:
-            raise RuntimeError(f"the number program must be >=1 and <=3 but is {np}")
+        if np < 1 or np > self.n_lanes:
+            raise RuntimeError(f"the number program must be >=1 and <={self.n_lanes} but is {np}")
 
         futures = []
         for lane, program in enumerate(programs):
             f = asyncio.ensure_future(
-                self._run_async_program(lane=lane, program=program, out=out)
+                self._run_async_program(lane=lane, program=program, output=output)
             )
             futures.append(f)
         return futures
 
 
-    def run_program(self, program, out=None):
+    def run_program(self, program, output=None):
 
-        if out is None:
-            out = Output()
-            display(out)
-        np = len(programs)
+
+        if output is None:
+            output = Output()
+            display(output)
 
         lane_proxy = LegoBoostLaneProxy(boost=self, lane=0)
-        program(lane_proxy, out)
+        program(lane_proxy, output)
 
-    def connect(self, out=None):
+    def connect(self, output=None):
         async def main(lane, log):
             pass
 
-        self.run_async_program(main, out=out)
+        self.run_async_program(main, output=output)
 
-    async def _run_async_program(self, lane, program, out):
+    async def _run_async_program(self, lane, program, output):
         def log(*args, **kwargs):
             old_stdout = sys.stdout
             sys.stdout = mystdout = StringIO()
@@ -435,7 +455,7 @@ class LegoBoostWidget(DOMWidget):
             sys.stdout = old_stdout
 
             val = mystdout.getvalue()
-            out.append_stdout(f"{val}")
+            output.append_stdout(f"{val}")
 
         self._log = log
 
@@ -448,5 +468,5 @@ class LegoBoostWidget(DOMWidget):
                 err_str = "".join(
                     traceback.TracebackException.from_exception(ex).format()
                 )
-                out.append_stderr(f"{err_str}\n")
+                output.append_stderr(f"{err_str}\n")
                 print("err str", err_str)
