@@ -25,7 +25,6 @@ interface deviceCache {
 
 const device_cache: deviceCache = {};
 
-
 export class LegoBoostModel extends DOMWidgetModel {
   defaults() {
     return {
