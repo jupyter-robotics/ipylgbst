@@ -23,12 +23,13 @@ from contextlib import contextmanager, redirect_stdout
 from io import StringIO
 import sys
 import math
-
-
-# examine mystdout.getvalue()
+import traceback
 
 
 def wait_for_change(widget, value):
+    """
+    Wait for a change in a widget's value.
+    """
     future = asyncio.Future()
 
     def getvalue(change):
@@ -41,6 +42,10 @@ def wait_for_change(widget, value):
 
 
 class LedColor(str, Enum):
+    """
+    The color of the LED on the Boost Move Hub.
+    """
+
     off = "off"
     pink = "pink"
     purple = "purple"
@@ -54,6 +59,10 @@ class LedColor(str, Enum):
 
 
 class Port(str, Enum):
+    """
+    The ports on the Boost Move Hub.
+    """
+
     A = "A"
     B = "B"
     AB = "AB"
@@ -96,49 +105,283 @@ DEFAULT_DEVICE_INFO = {
 }
 
 
+class AsyncCommandContextManager:
+    def __init__(self, lane_proxy):
+        self.lane_proxy = lane_proxy
+        self.lane = self.lane_proxy.lane
+        self.boost = self.lane_proxy.boost
+        self._old_index = None
+
+    # enter the async context manager
+    async def __aenter__(self):
+        self._old_index = int(self.boost._device_info["lane_cmd_index"][self.lane])
+
+    # exit the async context manager
+    async def __aexit__(self, exc_type, exc, tb):
+        # report a message
+        old = self._old_index
+        while True:
+            await self.lane_proxy._poll()
+            # self._log(self._device_info)
+            if "lane_cmd_index" not in self.boost._device_info:
+                continue
+            new = int(self.boost._device_info["lane_cmd_index"][self.lane])
+            if new > old:
+                break
+            elif new < old:
+                raise RuntimeError(f"internal error! {old=} {new=}")
+
+
 class LegoBoostLaneProxy(object):
+
     def __init__(self, boost, lane):
         self.boost = boost
         self.lane = lane
 
-    async def get_distance(self):
-        return await self.boost._get_distance()
+    async def get_distance_async(self):
+        await self._poll()
+        d = self.boost._device_info["distance"]
+        if d is None:
+            d = float("inf")
+        if math.isfinite(d) and d > 255.0:
+            d = 255.0
+        return d
 
-    async def get_roll(self):
-        return await self.boost._get_roll()
+    async def get_roll_async(self):
+        """Get the roll angle of the Boost Move Hub."""
+        await self._poll()
+        return self.boost._device_info["tilt"]["roll"]
 
-    async def get_pitch(self):
-        return await self.boost._get_pitch()
+    async def get_pitch_async(self):
+        """Get the pitch angle of the Boost Move Hub."""
+        await self._poll()
+        return self.boost._device_info["tilt"]["pitch"]
 
-    async def get_color(self):
-        return await self.boost._get_color()
+    async def get_color_async(self):
+        """Get the color of the Boost Move Hub."""
+        await self._poll()
+        return self.boost._device_info["color"]
 
-    async def motor_angle(self, port, angle, power, wait=True):
-        return await self.boost._motor_angle(
-            lane=self.lane, port=port, angle=angle, power=power, wait=wait
+    async def motor_angle_async(self, port, angle, power):
+        """
+            Turn a motor for a given angle:
+
+            Args:
+                port (Port): The port of the motor.
+                angle (float): The angle in degrees.
+                power (int): The power of the motor.
+            
+            Warning: This function needs to be awaited before the next command can be executed.
+        """
+        if isinstance(port, Port):
+            port = port.value
+        wait = True
+        async with self._async_command_context():
+            self._send(
+                command="motorAngleAsync",
+                await_in_kernel=True,
+                await_in_frontend=True,
+                args=[str(port), float(angle), int(power), bool(wait)],
+            )
+
+    async def motor_angle_multi_async(self, angle, power_a, power_b):
+        """
+            Turn both motors for a given angle:
+
+            Args:
+                angle (float): The angle in degrees.
+                power_a (int): The power of motor A.
+                power_b (int): The power of motor B.
+            
+            Warning: This function needs to be awaited before the next command can be executed.
+        """
+        wait = True
+        async with self._async_command_context():
+            self._send(
+                command="motorAngleMultiAsync",
+                await_in_kernel=True,
+                await_in_frontend=True,
+                args=[float(angle), int(power_a), int(power_b), bool(wait)],
+            )
+
+    async def motor_time_async(self, port, seconds, power):
+        """
+            Turn a motor for a given time:
+            
+            Args:
+                port (Port): The port of the motor.
+                seconds (float): The time in seconds.
+                power (int): The power of the motor.
+
+            Warning: This function needs to be awaited before the next command can be executed. 
+        """
+        if isinstance(port, Port):
+            port = port.value
+        wait = True
+        async with self._async_command_context():
+            self._send(
+                command="motorTimeAsync",
+                await_in_kernel=True,
+                await_in_frontend=True,
+                args=[str(port), float(seconds), int(power), bool(wait)],
+            )
+
+    async def motor_time_multi_async(self, seconds, power_a, power_b):
+        """
+            Turn both motors for a given time:
+
+            Args:
+                seconds (float): The time in seconds.
+                power_a (int): The power of motor A.
+                power_b (int): The power of motor B.
+            
+            Warning: This function needs to be awaited before the next command can be executed.
+        """
+        wait = True
+
+        async with self._async_command_context():
+            self._send(
+                command="motorTimeMultiAsync",
+                await_in_kernel=True,
+                await_in_frontend=True,
+                args=[float(seconds), int(power_a), int(power_b), bool(wait)],
+            )
+
+    async def set_led_async(self, color):
+        """ Set the color of the LED on the Boost Move Hub.
+
+            Args:
+                color (LedColor): The color of the LED.
+            
+            Warning: This function needs to be awaited before the next command can be executed.
+        """
+        async with self._async_command_context():
+            if isinstance(color, LedColor):
+                color = color.value
+            self._send(
+                command="ledAsync",
+                await_in_kernel=True,
+                await_in_frontend=True,
+                args=[str(color)],
+            )
+
+    def motor_time(self, port, seconds, power):
+        """ Turn a motor for a given time:
+
+            Args:
+                port (Port): The port of the motor.
+                seconds (float): The time in seconds.
+                power (int): The power of the motor.
+            
+            Warning: even though this function is not async, it is non-blocking.
+        """
+        if isinstance(port, Port):
+            port = port.value
+        self._send(
+            command="motorTime",
+            await_in_kernel=False,
+            await_in_frontend=False,
+            args=[str(port), float(seconds), int(power)],
         )
 
-    async def motor_angle_multi(self, angle, power_a, power_b, wait=True):
-        return await self.boost._motor_angle_multi(
-            lane=self.lane, angle=angle, power_a=power_a, power_b=power_b, wait=wait
+    def motor_angle(self, port, angle, power):
+        """ Turn a motor for a given angle:
+
+            Args:
+                port (Port): The port of the motor.
+                angle (float): The angle in degrees.
+                angle (int): The power of the motor.
+                power (int): The power of the motor.
+            
+            Warning: even though this function is not async, it is non-blocking.
+        """
+        if isinstance(port, Port):
+            port = port.value
+        self._send(
+            command="motorAngle",
+            await_in_kernel=False,
+            await_in_frontend=False,
+            args=[str(port), float(angle), int(power)],
         )
 
-    async def motor_time(self, port, seconds, power, wait=True):
-        return await self.boost._motor_time(
-            lane=self.lane, port=port, seconds=seconds, power=power, wait=wait
+    def motor_time_multi(self, seconds, power_a, power_b):
+        """ Turn both motors for a given time:
+
+            Args:
+                seconds (float): The time in seconds.
+                power_a (int): The power of motor A.
+                power_b (int): The power of motor B.
+
+            Warning: even though this function is not async, it is non-blocking.
+        """
+        self._send(
+            command="motorTimeMulti",
+            await_in_kernel=False,
+            await_in_frontend=False,
+            args=[float(seconds), int(power_a), int(power_b)],
         )
 
-    async def motor_time_multi(self, seconds, power_a, power_b, wait=True):
-        return await self.boost._motor_time_multi(
-            lane=self.lane, seconds=seconds, power_a=power_a, power_b=power_b, wait=wait
+    def motor_angle_multi(self, angle, power_a, power_b):
+        """ Turn both motors for a given angle:
+
+            Args:
+                angle (float): The angle in degrees.
+                power_a (int): The power of motor A.
+                power_b (int): The power of motor B.
+            
+            Warning: even though this function is not async, it is non-blocking.
+        """
+        self._send(
+            command="motorAngleMulti",
+            await_in_kernel=False,
+            await_in_frontend=False,
+            args=[float(angle), int(power_a), int(power_b)],
         )
 
-    async def set_led(self, color):
-        return await self.boost._set_led(lane=self.lane, color=color)
+    def set_led(self, color):
+        """ Set the color of the LED on the Boost Move Hub.
+
+            Args: 
+                color (LedColor): The color of the LED.
+            
+            Warning: even though this function is not async, it is non-blocking.
+        """
+        if isinstance(color, LedColor):
+            color = color.value
+        self._send(
+            command="led",
+            await_in_kernel=False,
+            await_in_frontend=False,
+            args=[str(color)],
+        )
+
+    async def _connect(self):
+        async with self._async_command_context():
+            self._send(
+                command="connect",
+                await_in_kernel=True,
+                await_in_frontend=True,
+                args=[],
+            )
+
+    def _send(self, command, await_in_kernel, await_in_frontend, args):
+        data = {}
+        data["command"] = str(command)
+        data["await_in_kernel"] = bool(await_in_kernel)
+        data["await_in_frontend"] = bool(await_in_frontend)
+        data["lane"] = self.lane
+        data["args"] = args
+        self.boost.send(data, [])
+
+    def _async_command_context(self):
+        return AsyncCommandContextManager(lane_proxy=self)
+
+    async def _poll(self):
+        await wait_for_change(self.boost, "_device_info")
 
 
 class LegoBoostWidget(DOMWidget):
-    """TODO: Add docstring here"""
+    """Lego Boost Widget"""
 
     _model_name = Unicode("LegoBoostModel").tag(sync=True)
     _model_module = Unicode(module_name).tag(sync=True)
@@ -146,42 +389,63 @@ class LegoBoostWidget(DOMWidget):
     _view_name = Unicode("LegoBoostView").tag(sync=True)
     _view_module = Unicode(module_name).tag(sync=True)
     _view_module_version = Unicode(module_version).tag(sync=True)
-
     _device_info = Dict(DEFAULT_DEVICE_INFO, read_only=True).tag(sync=True)
+    name = Unicode("device1").tag(sync=True)
+    n_lanes =Int(3).tag(sync=True)
 
     def __init__(self, *args, **kwargs):
         super(LegoBoostWidget, self).__init__(*args, **kwargs)
-
+        
         self._run_lock = asyncio.Lock()
+        self._lane_locks = [asyncio.Lock()  for i in range(self.n_lanes)]
 
-        self._lane_locks = [asyncio.Lock(), asyncio.Lock(), asyncio.Lock()]
+    def run_async_program(self, program, lane=0, output=None):
 
-    def run(self, program, out=None):
-        return self.run_concurrent(programs=[program], out=out)
+        if lane < 0 or lane >= self.n_lanes :
+            raise RuntimeError(f"lane must be >=0 and < {self.n_lanes} but is {lane}")
 
-    def run_concurrent(self, programs, out=None):
-        if out is None:
-            out = Output()
-            display(out)
+        if output is None:
+            output = Output()
+            display(output)
+        return asyncio.ensure_future(
+            self._run_async_program(lane=lane, program=program, output=output)
+        )
+
+
+    def run_async_programs_concurrently(self, programs, output=None):
+        if output is None:
+            output = Output()
+            display(output)
         np = len(programs)
-        if np < 1 or np > 3:
-            raise RuntimeError(f"the number program must be >=1 and <=3 but is {np}")
+        if np < 1 or np > self.n_lanes:
+            raise RuntimeError(f"the number program must be >=1 and <={self.n_lanes} but is {np}")
 
         futures = []
         for lane, program in enumerate(programs):
             f = asyncio.ensure_future(
-                self._run_program(lane=lane, program=program, out=out)
+                self._run_async_program(lane=lane, program=program, output=output)
             )
             futures.append(f)
         return futures
 
-    def connect(self, out=None):
+
+    def run_program(self, program, output=None):
+
+
+        if output is None:
+            output = Output()
+            display(output)
+
+        lane_proxy = LegoBoostLaneProxy(boost=self, lane=0)
+        program(lane_proxy, output)
+
+    def connect(self, output=None):
         async def main(lane, log):
             pass
 
-        self.run(main, out=out)
+        self.run_async_program(main, output=output)
 
-    async def _run_program(self, lane, program, out):
+    async def _run_async_program(self, lane, program, output):
         def log(*args, **kwargs):
             old_stdout = sys.stdout
             sys.stdout = mystdout = StringIO()
@@ -191,80 +455,18 @@ class LegoBoostWidget(DOMWidget):
             sys.stdout = old_stdout
 
             val = mystdout.getvalue()
-            out.append_stdout(f"{val}")
+            output.append_stdout(f"{val}")
 
         self._log = log
 
         async with self._lane_locks[lane]:
             lane_proxy = LegoBoostLaneProxy(boost=self, lane=lane)
             try:
-                await self._connect(lane=lane)
+                await lane_proxy._connect()
                 await program(lane_proxy, log)
-            except Exception as e:
-                out.append_stderr(f"{e}")
-
-    async def _next_lane_cmd(self, lane):
-        old = int(self._device_info["lane_cmd_index"][lane])
-        while True:
-            await self._poll()
-            # self._log(self._device_info)
-            if "lane_cmd_index" not in self._device_info:
-                continue
-            new = int(self._device_info["lane_cmd_index"][lane])
-            if new > old:
-                break
-            elif new < old:
-                raise RuntimeError(f"internal error! {old=} {new=}")
-
-    async def _poll(self):
-        await wait_for_change(self, "_device_info")
-
-    async def _get_distance(self):
-        d = self._device_info["distance"]
-        if d is None:
-            d = float("inf")
-        if math.isfinite(d) and d > 255.0:
-            d = 255.0
-        return d
-
-    async def _get_roll(self):
-        await self._poll()
-        return self._device_info["tilt"]["roll"]
-
-    async def _get_pitch(self):
-        await self._poll()
-        return self._device_info["tilt"]["pitch"]
-
-    async def _get_color(self):
-        await self._poll()
-        return self._device_info["color"]
-
-    async def _motor_angle(self, lane, port, angle, power, wait=True):
-        args = [str(port), float(angle), int(power), bool(wait)]
-        self.send({"command": "motorAngleAsync", "lane": lane, "args": args}, [])
-        await self._next_lane_cmd(lane=lane)
-
-    async def _motor_angle_multi(self, lane, angle, power_a, power_b, wait=True):
-        args = [float(angle), int(power_a), int(power_b), bool(wait)]
-        self.send({"command": "motorAngleMultiAsync", "lane": lane, "args": args}, [])
-        await self._next_lane_cmd(lane=lane)
-
-    async def _motor_time(self, lane, port, seconds, power, wait=True):
-        args = [str(port), float(seconds), int(power), bool(wait)]
-        self.send({"command": "motorTimeAsync", "lane": lane, "args": args}, [])
-        await self._next_lane_cmd(lane=lane)
-
-    async def _motor_time_multi(self, lane, seconds, power_a, power_b, wait=True):
-        args = [float(seconds), int(power_a), int(power_b), bool(wait)]
-        self.send({"command": "motorTimeMultiAsync", "lane": lane, "args": args}, [])
-        await self._next_lane_cmd(lane=lane)
-
-    async def _set_led(self, lane, color):
-        if isinstance(color, LedColor):
-            color = color.value
-        self.send({"command": "ledAsync", "lane": lane, "args": [color]}, [])
-        await self._next_lane_cmd(lane=lane)
-
-    async def _connect(self, lane):
-        self.send({"command": "connect", "lane": lane}, [])
-        await self._next_lane_cmd(lane=lane)
+            except Exception as ex:
+                err_str = "".join(
+                    traceback.TracebackException.from_exception(ex).format()
+                )
+                output.append_stderr(f"{err_str}\n")
+                print("err str", err_str)

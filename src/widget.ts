@@ -13,7 +13,17 @@ import { MODULE_NAME, MODULE_VERSION } from './version';
 import '../css/widget.css';
 
 import LegoBoost from 'lego-boost-browser';
-const boost = new LegoBoost();
+
+// we use globals for the lego boost robot since connecting to
+// them takes a long time. If the model would hold the
+// boost instance, we would need to re-connect any time
+// we restart the kernel.
+
+interface deviceCache {
+  [key: string]: any;
+}
+
+const device_cache: deviceCache = {};
 
 export class LegoBoostModel extends DOMWidgetModel {
   defaults() {
@@ -26,6 +36,8 @@ export class LegoBoostModel extends DOMWidgetModel {
       _view_module: LegoBoostModel.view_module,
       _view_module_version: LegoBoostModel.view_module_version,
       _device_info: {},
+      name: 'device1',
+      n_lanes: 3,
     };
   }
 
@@ -55,16 +67,32 @@ export class LegoBoostModel extends DOMWidgetModel {
 
   initialize(attributes: any, options: any) {
     super.initialize(attributes, options);
-    this.boost = boost; //new LegoBoost();
 
+    const n_lanes: number = this.get('n_lanes');
+    console.log(`initialize with n_lanes=${n_lanes}`, this);
+
+    const name: string = this.get('name');
+    console.log(`initialize with name=${name}`);
+    if (!(name in device_cache)) {
+      device_cache[name] = new LegoBoost();
+    }
+
+    this.boost = device_cache[name];
     this.on('msg:custom', async (command: any, buffers: any) => {
       const lane = command['lane'];
 
       this.lanes[lane] = this.lanes[lane].then(async () => {
-        await this.onCommand(command, buffers);
+        const await_in_kernel = <boolean>command['args'];
+        const await_in_frontend = <boolean>command['args'];
+        const p: Promise<void> = this.onCommand(command, buffers);
+        if (await_in_frontend) {
+          await p;
+        }
 
-        this.lane_cmd_index[lane] += 1;
-        this.save_device_info();
+        if (await_in_kernel) {
+          this.lane_cmd_index[lane] += 1;
+          this.save_device_info();
+        }
       });
     });
   }
@@ -85,32 +113,19 @@ export class LegoBoostModel extends DOMWidgetModel {
             this.poll();
             break;
 
-          case 'drive':
-            await this.boost.drive.apply(this.boost, args);
+          case 'led':
+            this.boost.led.apply(this.boost, args);
             break;
-
-          case 'turn':
-            await this.boost.turn.apply(this.boost, args);
-            break;
-
-          case 'driveUntil':
-            await this.boost.driveUntil.apply(this.boost, args);
-            break;
-
-          case 'turnUntil':
-            await this.boost.turnUntil.apply(this.boost, args);
-            break;
-
           case 'ledAsync':
             await this.boost.ledAsync.apply(this.boost, args);
             break;
 
           case 'motorTime':
-            await this.boost.motorTime.apply(this.boost, args);
+            this.boost.motorTime.apply(this.boost, args);
             break;
 
           case 'motorTimeMulti':
-            await this.boost.motorTimeMulti.apply(this.boost, args);
+            this.boost.motorTimeMulti.apply(this.boost, args);
             break;
 
           case 'motorTimeAsync':
@@ -122,11 +137,11 @@ export class LegoBoostModel extends DOMWidgetModel {
             break;
 
           case 'motorAngle':
-            await this.boost.motorAngle.apply(this.boost, args);
+            this.boost.motorAngle.apply(this.boost, args);
             break;
 
           case 'motorAngleMulti':
-            await this.boost.motorAngleMulti.apply(this.boost, args);
+            this.boost.motorAngleMulti.apply(this.boost, args);
             break;
 
           case 'motorAngleAsync':
@@ -138,7 +153,7 @@ export class LegoBoostModel extends DOMWidgetModel {
             break;
 
           default:
-            console.log(`unknown command "${cmd}"`);
+            console.error(`unknown command "${cmd}"`);
             break;
         }
       } else {
@@ -151,6 +166,7 @@ export class LegoBoostModel extends DOMWidgetModel {
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
     if (!this.boost.deviceInfo.connected) {
+      console.log('not connected yet');
       await this.boost.connect();
 
       for (let i = 0; i < 30; i++) {
@@ -164,6 +180,12 @@ export class LegoBoostModel extends DOMWidgetModel {
         }
       }
       await sleep(4000);
+    }
+
+    // a bit ugly do this here
+    const n_lanes: number = this.get('n_lanes');
+    while (this.lane_cmd_index.length < n_lanes) {
+      this.lane_cmd_index.push(0);
     }
 
     if (!this.polling_is_running) {
@@ -193,7 +215,7 @@ export class LegoBoostModel extends DOMWidgetModel {
   stop_polling = false;
   //private currentProcessing: Promise<void> = Promise.resolve();
 
-  private lane_cmd_index: Array<number> = [0, 0, 0];
+  private lane_cmd_index: Array<number> = [0];
   private lanes: Array<Promise<void>> = [
     Promise.resolve(),
     Promise.resolve(),
