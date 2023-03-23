@@ -24,7 +24,7 @@ interface deviceCache {
   [key: string]: any;
 }
 
-var device_cache : deviceCache  = {
+var device_cache: deviceCache = {
 
 }
 
@@ -72,12 +72,12 @@ export class LegoBoostModel extends DOMWidgetModel {
   initialize(attributes: any, options: any) {
     super.initialize(attributes, options);
 
-    const n_lanes : Number = this.get('n_lanes');
-    console.log(`initialize with n_lanes=${n_lanes}`,this );
+    const n_lanes: Number = this.get('n_lanes');
+    console.log(`initialize with n_lanes=${n_lanes}`, this);
 
-    const name : string = this.get('name');
+    const name: string = this.get('name');
     console.log(`initialize with name=${name}`);
-    if(!(name in device_cache)){
+    if (!(name in device_cache)) {
       device_cache[name] = new LegoBoost();
     }
 
@@ -87,18 +87,18 @@ export class LegoBoostModel extends DOMWidgetModel {
 
       this.lanes[lane] = this.lanes[lane].then(async () => {
 
-          const await_in_kernel = <boolean>(command['args']);
-          const await_in_frontend = <boolean>(command['args']);
+        const await_in_kernel = <boolean>(command['args']);
+        const await_in_frontend = <boolean>(command['args']);
 
-          let p : Promise<void> = this.onCommand(command, buffers);
-          if(await_in_frontend){
-            await p;
-          }
+        let p: Promise<void> = this.onCommand(command, buffers);
+        if (await_in_frontend) {
+          await p;
+        }
 
-          if(await_in_kernel){
-            this.lane_cmd_index[lane] += 1;
-            this.save_device_info();
-          }
+        if (await_in_kernel) {
+          this.lane_cmd_index[lane] += 1;
+          this.save_device_info();
+        }
       });
     });
   }
@@ -120,8 +120,8 @@ export class LegoBoostModel extends DOMWidgetModel {
             break;
 
           case 'led':
-              this.boost.led.apply(this.boost, args);
-              break;
+            this.boost.led.apply(this.boost, args);
+            break;
           case 'ledAsync':
             await this.boost.ledAsync.apply(this.boost, args);
             break;
@@ -189,8 +189,8 @@ export class LegoBoostModel extends DOMWidgetModel {
     }
 
     // a bit ugly do this here
-    const n_lanes : Number = this.get('n_lanes');
-    while(this.lane_cmd_index.length < n_lanes){
+    const n_lanes: Number = this.get('n_lanes');
+    while (this.lane_cmd_index.length < n_lanes) {
       this.lane_cmd_index.push(0);
     }
 
