@@ -7,6 +7,8 @@
 from .lego_boost import LegoBoostWidget, LedColor,Port, Sensor
 from ._version import __version__  # noqa
 
+version_info = __version__
+
 def _jupyter_labextension_paths():
     """Called by Jupyter Lab Server to detect if it is a valid labextension and
     to install the widget
