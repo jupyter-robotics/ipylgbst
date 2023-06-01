@@ -250,24 +250,26 @@ export class LegoBoostView extends DOMWidgetView {
   meter_distance: HTMLMeterElement;
   color_color: HTMLDivElement;
 
-  isWebBluetoothSupported : boolean =  navigator.bluetooth ? true : false;
+  isWebBluetoothSupported: boolean = navigator.bluetooth ? true : false;
 
   render() {
     this.el.classList.add('custom-widget');
 
     // checking if Web Bluetooth API is supported
     if (!this.isWebBluetoothSupported) {
-
       // bluetooth error box
       const bluetooth_box = document.createElement('div');
       bluetooth_box.classList.add('error-box');
       this.el.appendChild(bluetooth_box);
 
       this.txt_bluetooth = document.createElement('div');
-      this.txt_bluetooth.textContent = "Your device doesn't support Web Bluetooth API. Try to turn on Experimental Platform Features from Chrome, by accessing the following link and turning it on: chrome://flags/#enable-experimental-web-platform-features";
+      this.txt_bluetooth.textContent =
+        "Your device doesn't support Web Bluetooth API. Try to turn on Experimental Platform Features from Chrome, by accessing the following link and turning it on: chrome://flags/#enable-experimental-web-platform-features";
       bluetooth_box.appendChild(this.txt_bluetooth);
 
-      console.log( "Your device doesn't support Web Bluetooth API. Try to turn on Experimental Platform Features from Chrome, by accessing the following link and turning it on: chrome://flags/#enable-experimental-web-platform-features");
+      console.log(
+        "Your device doesn't support Web Bluetooth API. Try to turn on Experimental Platform Features from Chrome, by accessing the following link and turning it on: chrome://flags/#enable-experimental-web-platform-features"
+      );
     }
 
     // connection box
