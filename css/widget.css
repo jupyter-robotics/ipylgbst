@@ -6,7 +6,7 @@
 
 .custom-widget  {
   display: grid;
-  grid-template-columns: 200px 200px 200px;
+  grid-template-columns: 200px 200px 200px 200px;
   grid-gap: 10px;
   background-color: #fff;
   color: #444;
@@ -17,6 +17,14 @@
 .box {
   background-color: #444;
   color: #fff;
+  border-radius: 5px;
+  padding: 20px;
+  font-size: 100%;
+}
+
+.error-box {
+  background-color: #ffffff;
+  color: #000000;
   border-radius: 5px;
   padding: 20px;
   font-size: 100%;
