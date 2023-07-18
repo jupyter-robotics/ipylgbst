@@ -6,7 +6,7 @@ Developer install
 To install a developer version of ipylgbst, you will first need to clone
 the repository::
 
-    git clone https://github.com/jupyterlab-contrib-ipylgbst
+    git clone https://github.com/jupyter-robotics/ipylgbst
     cd ipylgbst
 
 Next, install it with a develop install using pip::
