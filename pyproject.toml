@@ -1,12 +1,12 @@
 [build-system]
-requires = ["hatchling>=1.4.0", "jupyterlab==3.*", "hatch-nodejs-version"]
+requires = ["hatchling>=1.4.0", "jupyterlab==4.*", "hatch-nodejs-version"]
 build-backend = "hatchling.build"
 
 [project]
 name = "ipylgbst"
 readme = "README.md"
 license = { file = "LICENSE.txt" }
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 classifiers = [
     "Framework :: Jupyter",
     "Intended Audience :: Developers",
@@ -14,10 +14,9 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
 ]
 dependencies = [
     "ipywidgets>=7.0.0",
