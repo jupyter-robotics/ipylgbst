@@ -149,6 +149,7 @@ $RECYCLE.BIN/
 
 **/node_modules/
 ipylgbst/nbextension/index.*
+_temp_extension
 
 # Coverage data
 # -------------
