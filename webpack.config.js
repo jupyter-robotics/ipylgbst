@@ -5,7 +5,7 @@ const version = require('./package.json').version;
 const rules = [
   { test: /\.ts$/, loader: 'ts-loader' },
   { test: /\.js$/, loader: 'source-map-loader' },
-  { test: /\.css$/, use: ['style-loader', 'css-loader']}
+  { test: /\.css$/, use: ['style-loader', 'css-loader'] }
 ];
 
 // Packages that shouldn't be bundled but loaded at runtime
@@ -13,7 +13,7 @@ const externals = ['@jupyter-widgets/base'];
 
 const resolve = {
   // Add '.ts' and '.tsx' as resolvable extensions.
-  extensions: [".webpack.js", ".web.js", ".ts", ".js"]
+  extensions: ['.webpack.js', '.web.js', '.ts', '.js']
 };
 
 module.exports = [
@@ -29,14 +29,14 @@ module.exports = [
       filename: 'index.js',
       path: path.resolve(__dirname, 'ipylgbst', 'nbextension'),
       libraryTarget: 'amd',
-      publicPath: '',
+      publicPath: ''
     },
     module: {
       rules: rules
     },
     devtool: 'source-map',
     externals,
-    resolve,
+    resolve
   },
 
   /**
@@ -52,20 +52,19 @@ module.exports = [
   {
     entry: './src/index.ts',
     output: {
-        filename: 'index.js',
-        path: path.resolve(__dirname, 'dist'),
-        libraryTarget: 'amd',
-        library: "ipylgbst",
-        publicPath: 'https://unpkg.com/ipylgbst@' + version + '/dist/'
+      filename: 'index.js',
+      path: path.resolve(__dirname, 'dist'),
+      libraryTarget: 'amd',
+      library: 'ipylgbst',
+      publicPath: 'https://unpkg.com/ipylgbst@' + version + '/dist/'
     },
     devtool: 'source-map',
     module: {
-        rules: rules
+      rules: rules
     },
     externals,
-    resolve,
+    resolve
   },
-
 
   /**
    * Documentation widget bundle
@@ -77,7 +76,7 @@ module.exports = [
     output: {
       filename: 'embed-bundle.js',
       path: path.resolve(__dirname, 'docs', 'source', '_static'),
-      library: "ipylgbst",
+      library: 'ipylgbst',
       libraryTarget: 'amd'
     },
     module: {
@@ -85,7 +84,6 @@ module.exports = [
     },
     devtool: 'source-map',
     externals,
-    resolve,
+    resolve
   }
-
 ];

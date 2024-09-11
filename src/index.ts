@@ -8,7 +8,8 @@ import {
  */
 const plugin: JupyterFrontEndPlugin<void> = {
   id: 'ipylgbst:plugin',
-  description: 'A widget library for controlling LEGO® BOOST via web-bluetooth',
+  description:
+    'A widget library for controlling LEGO® BOOST via web-bluetooth',
   autoStart: true,
   activate: (app: JupyterFrontEnd) => {
     console.log('JupyterLab extension ipylgbst is activated!');

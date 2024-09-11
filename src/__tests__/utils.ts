@@ -58,7 +58,7 @@ export class DummyManager extends baseManager.ManagerBase {
   ) {
     // TODO: make this a spy
     // TODO: return an html element
-    return Promise.resolve(view).then((view) => {
+    return Promise.resolve(view).then(view => {
       this.el.appendChild(view.el);
       view.on('remove', () => console.log('view removed', view));
       return view.el;
@@ -112,7 +112,7 @@ export function createTestModel<T extends widgets.WidgetModel>(
   const widget_manager = new DummyManager();
   const modelOptions = {
     widget_manager: widget_manager,
-    model_id: id,
+    model_id: id
   };
 
   return new constructor(attributes, modelOptions);
