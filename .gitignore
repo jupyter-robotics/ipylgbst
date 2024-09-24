@@ -11,8 +11,6 @@ ipylgbst/labextension
 # Version file is handled by hatchling
 ipylgbst/_version.py
 
-# Integration tests
-ui-tests
 
 _temp_extension 
 
