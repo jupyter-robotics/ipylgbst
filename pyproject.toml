@@ -53,8 +53,10 @@ artifacts = ["ipylgbst/labextension"]
 exclude = [".github", "binder"]
 
 [tool.hatch.build.targets.wheel.shared-data]
+"ipylgbst/nbextension" = "share/jupyter/nbextensions/ipylgbst"
 "ipylgbst/labextension" = "share/jupyter/labextensions/ipylgbst"
 "install.json" = "share/jupyter/labextensions/ipylgbst/install.json"
+"ipylgbst.json" = "etc/jupyter/nbconfig/notebook.d/ipylgbst.json"
 
 [tool.hatch.build.hooks.version]
 path = "ipylgbst/_version.py"

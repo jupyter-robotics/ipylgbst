@@ -24,5 +24,5 @@ module.exports = {
   ],
   coverageReporters: ['lcov', 'text'],
   testRegex: '/__tests__/.*.spec.ts[x]?$',
-  transformIgnorePatterns: ['/node_modules/(?!(@jupyter(lab|-widgets)/.*)/)'],
+  transformIgnorePatterns: ['/node_modules/(?!(@jupyter(lab|-widgets)/.*)/)']
 };
