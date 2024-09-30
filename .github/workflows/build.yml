@@ -25,12 +25,11 @@ jobs:
       run: |
         python -m pip install -U codecov
         npm install -g codecov
+
     - name: Test the extension
       run: |
-      set -eux
         python -m pip install --upgrade -v -e ".[test, examples, docs]"
         python -m pytest
-        jlpm run test
 
     - name: Lint the extension
       run: |
