@@ -4,7 +4,7 @@
 import {
   DOMWidgetModel,
   DOMWidgetView,
-  ISerializers,
+  ISerializers
 } from '@jupyter-widgets/base';
 
 import { MODULE_NAME, MODULE_VERSION } from './version';
@@ -37,7 +37,7 @@ export class LegoBoostModel extends DOMWidgetModel {
       _view_module_version: LegoBoostModel.view_module_version,
       _device_info: {},
       name: 'device1',
-      n_lanes: 3,
+      n_lanes: 3
     };
   }
 
@@ -45,7 +45,7 @@ export class LegoBoostModel extends DOMWidgetModel {
     const device_info = {
       polling_frame: this.polling_frame,
       lane_cmd_index: this.lane_cmd_index,
-      ...this.boost.deviceInfo,
+      ...this.boost.deviceInfo
     };
     this.set('_device_info', device_info);
     this.save_changes();
@@ -163,7 +163,7 @@ export class LegoBoostModel extends DOMWidgetModel {
   }
 
   async connect() {
-    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
     if (!this.boost.deviceInfo.connected) {
       console.log('not connected yet');
@@ -195,7 +195,7 @@ export class LegoBoostModel extends DOMWidgetModel {
   }
 
   static serializers: ISerializers = {
-    ...DOMWidgetModel.serializers,
+    ...DOMWidgetModel.serializers
     // Add any extra serializers here
   };
 
@@ -219,7 +219,7 @@ export class LegoBoostModel extends DOMWidgetModel {
   private lanes: Array<Promise<void>> = [
     Promise.resolve(),
     Promise.resolve(),
-    Promise.resolve(),
+    Promise.resolve()
   ];
 
   static model_name = 'LegoBoostModel';

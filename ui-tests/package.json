@@ -1,0 +1,15 @@
+{
+    "name": "ipylgbst-ui-tests",
+    "version": "0.2.1",
+    "description": "A widget library for controlling LEGO® BOOST via web-bluetooth",
+    "private": true,
+    "scripts": {
+      "start": "jupyter lab --config jupyter_server_test_config.py",
+      "test": "jlpm playwright test",
+      "test:update": "jlpm playwright test --update-snapshots"
+    },
+    "devDependencies": {
+      "@jupyterlab/galata": "^5.0.5",
+      "@playwright/test": "^1.37.0"
+    }
+  }

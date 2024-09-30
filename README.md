@@ -1,73 +1,97 @@
-
 # ipylgbst
 
-[![Github Actions Status](https://github.com/jupyter-robotics/ipylgbst/workflows/Build/badge.svg)](https://github.com/jupyter-robotics/rise/actions/workflows/build.yml) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jupyter-robotics/ipylgbst/main)
+[![Github Actions Status](https://github.com/jupyter-robotics/ipylgbst/workflows/Build/badge.svg)](https://github.com/jupyter-robotics/ipylgbst/actions/workflows/build.yml)
 
-A widget library for controlling LEGO® BOOST via web-bluetooth.
+A widget library for controlling LEGO® BOOST via web-bluetooth
 
-https://user-images.githubusercontent.com/904752/223380492-a6b3dc34-064c-4b2c-a1d9-71f7712a8f57.mp4
+## Requirements
 
-## Installation
+- JupyterLab >= 4.0.0
 
-You can install using `pip`:
+## Install
+
+To install the extension, execute:
 
 ```bash
 pip install ipylgbst
 ```
 
-## Development Installation
+## Uninstall
 
-Create a dev environment:
+To remove the extension, execute:
 
 ```bash
-conda create -n ipylgbst-dev -c conda-forge nodejs yarn python jupyterlab
-conda activate ipylgbst-dev
+pip uninstall ipylgbst
 ```
 
-Install the python. This will also build the TS package.
+## Contributing
+
+### Development install
+
+Note: You will need NodeJS to build the extension package.
+
+The `jlpm` command is JupyterLab's pinned version of
+[yarn](https://yarnpkg.com/) that is installed with JupyterLab. You may use
+`yarn` or `npm` in lieu of `jlpm` below.
+
 ```bash
-pip install -e ".[test, examples]"
+# Clone the repo to your local environment
+# Change directory to the ipylgbst directory
+# Install package in development mode
+pip install -e "."
+# Link your development version of the extension with JupyterLab
+jupyter labextension develop . --overwrite
+# Rebuild extension Typescript source after making changes
+jlpm build
 ```
 
-When developing your extensions, you need to manually enable your extensions with the
-notebook / lab frontend. For lab, this is done by the command:
-
-```
-jupyter labextension develop --overwrite .
-yarn run build
-```
-
-Note that the `--symlink` flag doesn't work on Windows, so you will here have to run
-the `install` command every time that you rebuild your extension. For certain installations
-you might also need another flag instead of `--sys-prefix`, but we won't cover the meaning
-of those flags here.
-
-### How to see your changes
-
-#### Typescript
-
-If you use JupyterLab to develop then you can watch the source directory and run JupyterLab at the same time in different
-terminals to watch for changes in the extension's source and automatically rebuild the widget.
+You can watch the source directory and run JupyterLab at the same time in different terminals to watch for changes in the extension's source and automatically rebuild the extension.
 
 ```bash
 # Watch the source directory in one terminal, automatically rebuilding when needed
-yarn run watch
+jlpm watch
 # Run JupyterLab in another terminal
 jupyter lab
 ```
 
-After a change wait for the build to finish and then refresh your browser and the changes should take effect.
+With the watch command running, every saved change will immediately be built locally and available in your running JupyterLab. Refresh JupyterLab to load the change in your browser (you may need to wait several seconds for the extension to be rebuilt).
 
-#### Python
-
-If you make a change to the python code then you will need to restart the notebook kernel to have it take effect.
-
-## Updating the version
-
-To update the version, install tbump and use it to bump the version.
-By default it will also create a tag.
+By default, the `jlpm build` command generates the source maps for this extension to make it easier to debug using the browser dev tools. To also generate source maps for the JupyterLab core extensions, you can run the following command:
 
 ```bash
-pip install tbump
-tbump <new-version>
+jupyter lab build --minimize=False
 ```
+
+### Development uninstall
+
+```bash
+pip uninstall ipylgbst
+```
+
+In development mode, you will also need to remove the symlink created by `jupyter labextension develop`
+command. To find its location, you can run `jupyter labextension list` to figure out where the `labextensions`
+folder is located. Then you can remove the symlink named `ipylgbst` within that folder.
+
+### Testing the extension
+
+#### Frontend tests
+
+This extension is using [Jest](https://jestjs.io/) for JavaScript code testing.
+
+To execute them, execute:
+
+```sh
+jlpm
+jlpm test
+```
+
+#### Integration tests
+
+This extension uses [Playwright](https://playwright.dev/docs/intro) for the integration tests (aka user level tests).
+More precisely, the JupyterLab helper [Galata](https://github.com/jupyterlab/jupyterlab/tree/master/galata) is used to handle testing the extension in JupyterLab.
+
+More information are provided within the [ui-tests](./ui-tests/README.md) README.
+
+### Packaging the extension
+
+See [RELEASE](RELEASE.md)

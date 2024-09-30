@@ -6,7 +6,7 @@
 
 import { createTestModel } from './utils';
 
-import { LegoBoostModel } from '..';
+import { LegoBoostModel } from '../widget';
 
 describe('Example', () => {
   describe('LegoBoostModel', () => {

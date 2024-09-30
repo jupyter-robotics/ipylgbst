@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="1" failures="0" errors="0" time="4.195">
+  <testsuite name="Example" errors="0" failures="0" skipped="0" timestamp="2024-09-30T13:57:18" time="3.495" tests="1">
+    <testcase classname="Example LegoBoostModel should be createable" name="Example LegoBoostModel should be createable" time="0.041">
+    </testcase>
+  </testsuite>
+</testsuites>

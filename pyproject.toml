@@ -1,29 +1,30 @@
 [build-system]
-requires = ["hatchling>=1.4.0", "jupyterlab==3.*", "hatch-nodejs-version"]
+requires = ["hatchling>=1.5.0", "jupyterlab>=4.0.0,<5", "hatch-nodejs-version>=0.3.2"]
 build-backend = "hatchling.build"
 
 [project]
 name = "ipylgbst"
 readme = "README.md"
-license = { file = "LICENSE.txt" }
-requires-python = ">=3.7"
+license = { file = "LICENSE" }
+requires-python = ">=3.8"
 classifiers = [
     "Framework :: Jupyter",
-    "Intended Audience :: Developers",
-    "Intended Audience :: Science/Research",
+    "Framework :: Jupyter :: JupyterLab",
+    "Framework :: Jupyter :: JupyterLab :: 4",
+    "Framework :: Jupyter :: JupyterLab :: Extensions",
+    "Framework :: Jupyter :: JupyterLab :: Extensions :: Prebuilt",
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "ipywidgets>=7.0.0",
 ]
 dynamic = ["version", "description", "authors", "urls", "keywords"]
-
 [project.optional-dependencies]
 docs = [
     "jupyter_sphinx",
@@ -41,47 +42,33 @@ test = [
     "pytest-cov",
     "pytest>=6.0",
 ]
-
 [tool.hatch.version]
 source = "nodejs"
 
-[tool.hatch.build.hooks.version]
-path = "ipylgbst/_version.py"
-
 [tool.hatch.metadata.hooks.nodejs]
-fields = ["description", "authors", "urls"]
+fields = ["description", "authors", "urls", "keywords"]
 
-[tool.hatch.build]
-artifacts = [
-    "ipylgbst/nbextension/index.*",
-    "ipylgbst/labextension/*.tgz",
-    "ipylgbst/labextension",
-]
+[tool.hatch.build.targets.sdist]
+artifacts = ["ipylgbst/labextension"]
+exclude = [".github", "binder"]
 
 [tool.hatch.build.targets.wheel.shared-data]
 "ipylgbst/nbextension" = "share/jupyter/nbextensions/ipylgbst"
 "ipylgbst/labextension" = "share/jupyter/labextensions/ipylgbst"
-"./install.json" = "share/jupyter/labextensions/ipylgbst/install.json"
-"./ipylgbst.json" = "etc/jupyter/nbconfig/notebook.d/ipylgbst.json"
+"install.json" = "share/jupyter/labextensions/ipylgbst/install.json"
+"ipylgbst.json" = "etc/jupyter/nbconfig/notebook.d/ipylgbst.json"
 
-[tool.hatch.build.targets.sdist]
-exclude = [
-    ".github",
-]
+[tool.hatch.build.hooks.version]
+path = "ipylgbst/_version.py"
 
 [tool.hatch.build.hooks.jupyter-builder]
+dependencies = ["hatch-jupyter-builder>=0.5"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
-    "ipylgbst/nbextension/index.js",
+    "ipylgbst/labextension/static/style.js",
     "ipylgbst/labextension/package.json",
 ]
-skip-if-exists = [
-    "ipylgbst/nbextension/index.js",
-    "ipylgbst/labextension/package.json",
-]
-dependencies = [
-    "hatch-jupyter-builder>=0.5.0",
-]
+skip-if-exists = ["ipylgbst/labextension/static/style.js"]
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 build_cmd = "build:prod"
@@ -97,8 +84,12 @@ build_dir = "ipylgbst/labextension"
 version_cmd = "hatch version"
 
 [tool.jupyter-releaser.hooks]
-before-build-npm = ["python -m pip install jupyterlab~=3.0", "jlpm", "jlpm build:prod"]
-before-build-python = ["jlpm clean"]
+before-build-npm = [
+    "python -m pip install 'jupyterlab>=4.0.0,<5'",
+    "jlpm",
+    "jlpm build:prod"
+]
+before-build-python = ["jlpm clean:all"]
 
 [tool.check-wheel-contents]
 ignore = ["W002"]

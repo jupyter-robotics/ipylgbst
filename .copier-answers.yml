@@ -1,0 +1,14 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v4.3.5
+_src_path: https://github.com/jupyterlab/extension-template
+author_email: derthorstenbeier@gmail.com
+author_name: Thorsten Beier
+has_binder: false
+has_settings: false
+kind: frontend
+labextension_name: ipylgbst
+project_short_description: A widget library for controlling LEGO® BOOST via web-bluetooth
+python_name: ipylgbst
+repository: https://github.com/jupyter-robotics/ipylgbst
+test: true
+
