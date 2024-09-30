@@ -27,9 +27,10 @@ jobs:
         npm install -g codecov
     - name: Test the extension
       run: |
+      set -eux
         python -m pip install --upgrade -v -e ".[test, examples, docs]"
         python -m pytest
-        yarn run test
+        jlpm run test
 
     - name: Lint the extension
       run: |
@@ -37,10 +38,6 @@ jobs:
         jlpm
         jlpm run lint:check
 
-    - name: Test the extension
-      run: |
-        set -eux
-        jlpm run test
 
     - name: Build the extension
       run: |
