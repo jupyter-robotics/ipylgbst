@@ -23,7 +23,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install -U codecov
+        python -m pip install -U codecov "jupyterlab>=4.0.0,<5"
         npm install -g codecov
 
     - name: Test the extension
