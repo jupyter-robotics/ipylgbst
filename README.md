@@ -1,3 +1,5 @@
+⚠️  this repository has been archived. We recommend using [jupyter-movehub](https://github.com/QuantStack/jupyter-movehub.git)!
+
 # ipylgbst
 
 [![Github Actions Status](https://github.com/jupyter-robotics/ipylgbst/workflows/Build/badge.svg)](https://github.com/jupyter-robotics/ipylgbst/actions/workflows/build.yml)
